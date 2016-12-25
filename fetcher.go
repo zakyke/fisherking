@@ -1,3 +1,4 @@
+//Package fisherking ...
 /*
 *
 *File fetcher get return an io.Reader with data from a file in the web or local disk.
@@ -14,9 +15,13 @@
  */
 package fisherking
 
-import "io"
-import "context"
+import (
+	"context"
+	"io"
+	"strings"
+)
 
+//Provider  represent a provider like GCS, S3, ..
 type Provider struct {
 	Name string
 	context.Context
@@ -26,31 +31,43 @@ const (
 	gcsPrefix     = `gs://`
 	s3Prefix      = `s3://`
 	fsPrefix      = `file://`
+	htmPrefix     = `html://`
 	pathSeperator = `/`
 )
 
-type FileGetter func(path string) (io.Reader, error)
+//FileGetter ...
+type FileGetter func(string) (io.Reader, error)
+type FilePutter func(string) (io.Writer, error)
+type FileDeleter func(string, string) error
 
+//Fetcher an interface a provider should implement
 type Fetcher interface {
-	GetWithContect(contect context.Context, path string) FileGetter
-	Get(path string) (io.Reader, error)
+	GetWithContext(contect context.Context, source string) FileGetter
+	Get(source string) (io.Reader, error)
 }
 
-type Fetch struct {
+type Putter interface {
+	PutWithContext(context context.Context, source, destination string) FilePutter
+	Put(destination string) (io.Writer, error)
 }
 
-func (Fetch) GetWithContect(contect context.Context, path string) FileGetter {
-	return nil
+//GetWithContext can use for multiple files.
+func GetWithContext(contect context.Context, source string) FileGetter {
+	return Get
 }
 
-func (Fetch) Get(path string) (io.Reader, error) {
-	return nil, nil
+//Get a single file
+func Get(path string) (io.Reader, error) {
+	p := providerFactory(path)
+	return p.Get(path)
 }
 
-func ProviderFactory(path string) Fetcher {
-	//g,f,s
-	if path[0] == 'g' {
-		return GCS{}
+func providerFactory(path string) Fetcher {
+	ind := strings.Index(path, `://`)
+	indicator := path[:ind+3]
+	switch indicator {
+	case fsPrefix:
+		return fs{}
 	}
 	return nil
 }
