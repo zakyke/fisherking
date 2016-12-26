@@ -10,9 +10,10 @@ import (
 )
 
 type gcs struct {
+	context.Context
 }
 
-func (gcs) GetWithContect(contect context.Context, path string) FileGetter {
+func (gcs) GetWithContext(contect context.Context, path string) FileGetter {
 	//Listern to cancel channel.
 	return gcs{}.Get
 }

@@ -33,7 +33,3 @@ func TestRead(t *testing.T) {
 	}
 	log.Printf("%s", d)
 }
-
-// func TestReadAll(t *testing.T) {
-// 	t.Logf("%s", fs{}.WithRead().ReadAll(`file:///tmp/list.txt`))
-// }

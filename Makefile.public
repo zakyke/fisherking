@@ -1,0 +1,27 @@
+all: test
+
+build: clean get
+	go build
+
+test: build 
+	GOOGLE_APPLICATION_CREDENTIALS=my.json  go test -v	
+
+cover:
+	GOOGLE_APPLICATION_CREDENTIALS=my.json go test -coverprofile=coverage.out 
+	go tool cover -html=coverage.out
+
+get:
+	go get -v
+
+lint:
+	 metalinter todo
+
+metalinter:
+	gometalinter .
+
+clean:
+	go clean  
+	rm coverage.out
+
+todo:
+	@echo None

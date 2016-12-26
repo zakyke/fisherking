@@ -17,6 +17,7 @@ package fisherking
 
 import (
 	"context"
+	"errors"
 	"io"
 	"strings"
 )
@@ -28,11 +29,13 @@ type Provider struct {
 }
 
 const (
-	gcsPrefix     = `gs://`
-	s3Prefix      = `s3://`
-	fsPrefix      = `file://`
-	htmPrefix     = `html://`
-	pathSeperator = `/`
+	gcsPrefix         = `gs://`
+	s3Prefix          = `s3://`
+	fsPrefix          = `file://`
+	httpPrefix        = `http://`
+	httpsPrefix       = `https://`
+	pathSeperator     = `/`
+	providerDelimiter = `://`
 )
 
 //FileGetter ...
@@ -51,23 +54,41 @@ type Putter interface {
 	Put(destination string) (io.Writer, error)
 }
 
+type Deleter interface {
+	DeleteWithContext(context context.Context, source, destination string) FilePutter
+	Delete(destination string) (io.Writer, error)
+}
+
 //GetWithContext can use for multiple files.
-func GetWithContext(contect context.Context, source string) FileGetter {
-	return Get
+func GetWithContext(cxt context.Context, path string) FileGetter {
+	p := providerFactory(cxt, path)
+	if p == nil {
+		return nil
+	}
+	return p.Get
 }
 
 //Get a single file
 func Get(path string) (io.Reader, error) {
-	p := providerFactory(path)
+	p := providerFactory(nil, path)
+	if p == nil {
+		return nil, errors.New(`invalid provider prefix`)
+	}
 	return p.Get(path)
 }
 
-func providerFactory(path string) Fetcher {
-	ind := strings.Index(path, `://`)
+func providerFactory(ctx context.Context, path string) Fetcher {
+	ind := strings.Index(path, providerDelimiter)
 	indicator := path[:ind+3]
 	switch indicator {
 	case fsPrefix:
-		return fs{}
+		return fs{ctx}
+	case s3Prefix:
+		return s3{ctx}
+	case gcsPrefix:
+		return gcs{ctx}
+	case httpPrefix, httpsPrefix:
+		return http{ctx}
 	}
 	return nil
 }

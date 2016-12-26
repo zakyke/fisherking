@@ -10,9 +10,10 @@ import (
 )
 
 type s3 struct {
+	context.Context
 }
 
-func (s3) GetWithContect(contect context.Context, path string) FileGetter {
+func (s3) GetWithContext(contect context.Context, path string) FileGetter {
 	//Listern to cancel channel.
 	return gcs{}.Get
 }
