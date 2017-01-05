@@ -2,7 +2,10 @@ package fisherking
 
 import (
 	"context"
+	"errors"
 	"io"
+	"log"
+	"path"
 
 	"os"
 )
@@ -11,12 +14,8 @@ type fs struct {
 	context.Context
 }
 
-func (f fs) GetWithContext(cxt context.Context, path string) FileGetter {
-	return fs{cxt}.Get
-}
-
 func (f fs) Get(path string) (io.Reader, error) {
-	path = path[6:]
+	path = path[len(fsPrefix):]
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -24,13 +23,21 @@ func (f fs) Get(path string) (io.Reader, error) {
 	return file, nil
 }
 
-func (f fs) PutWithContext(cxt context.Context, path string) FilePutter {
-	return fs{cxt}.Put
-}
-func (f fs) Put(destination string) (io.Writer, error) {
-	file, err := os.Open(destination)
-	if err != nil {
-		return nil, err
+func (f fs) Put(destination string, data io.Reader) error {
+	// Create directory if needed.
+	destination = destination[len(fsPrefix):]
+	basepath := path.Dir(destination)
+	filename := path.Base(destination)
+	log.Println(basepath, ` `, filename)
+	if os.MkdirAll(basepath, 0777) != nil {
+		return errors.New(`unable to create directory ` + basepath)
+
 	}
-	return file, nil
+
+	fileOut, err := os.Create(path.Join(basepath, filename))
+	if err != nil {
+		return errors.New(`nable to create ` + path.Join(basepath, filename) + err.Error())
+	}
+	defer fileOut.Close()
+	return nil
 }

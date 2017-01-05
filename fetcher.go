@@ -34,61 +34,66 @@ const (
 	fsPrefix          = `file://`
 	httpPrefix        = `http://`
 	httpsPrefix       = `https://`
-	pathSeperator     = `/`
+	linPathSeperator  = `/`
+	winPathSeperator  = `\`
 	providerDelimiter = `://`
 )
 
 //FileGetter ...
-type FileGetter func(string) (io.Reader, error)
-type FilePutter func(string) (io.Writer, error)
-type FileDeleter func(string, string) error
+// type FileGetter func(string) (io.Reader, error)
+// type FilePutter func(context context.Context, destination string, data io.Writer) error
+
+//type FileDeleter func(string, string) error
+// type Deleter interface {
+// 	DeleteWithContext(context context.Context, source, destination string) FilePutter
+// 	Delete(destination string) (io.Writer, error)
+// }
 
 //Fetcher an interface a provider should implement
-type Fetcher interface {
-	GetWithContext(contect context.Context, source string) FileGetter
+type Fisher interface {
 	Get(source string) (io.Reader, error)
+	Put(destination string, data io.Reader) error
+	//Delete(source string)  error
+	//Move(source, destination string)  error
 }
 
-type Putter interface {
-	PutWithContext(context context.Context, source, destination string) FilePutter
-	Put(destination string) (io.Writer, error)
+//Put write a Reader to destination without any context.
+func Put(destination string, data io.Reader) error {
+	return PutWithContext(context.Background(), destination, data)
 }
 
-type Deleter interface {
-	DeleteWithContext(context context.Context, source, destination string) FilePutter
-	Delete(destination string) (io.Writer, error)
+//PutWithContext write a Reader to destination with context. metadata for example.
+func PutWithContext(context context.Context, destination string, data io.Reader) error {
+	p := providerFactory(context, destination)
+	return p.Put(destination, data)
 }
 
-//GetWithContext can use for multiple files.
-func GetWithContext(cxt context.Context, path string) FileGetter {
-	p := providerFactory(cxt, path)
+//GetWithContext can use for multiple files, cancelation...
+func GetWithContext(cxt context.Context, source string) (io.Reader, error) {
+	p := providerFactory(cxt, source)
 	if p == nil {
-		return nil
+		return nil, errors.New(`fail to parse path`)
 	}
-	return p.Get
+	return p.Get(source)
 }
 
 //Get a single file
-func Get(path string) (io.Reader, error) {
-	p := providerFactory(nil, path)
-	if p == nil {
-		return nil, errors.New(`invalid provider prefix`)
-	}
-	return p.Get(path)
+func Get(source string) (io.Reader, error) {
+	return GetWithContext(context.Background(), source)
 }
 
-func providerFactory(ctx context.Context, path string) Fetcher {
+func providerFactory(ctx context.Context, path string) Fisher {
 	ind := strings.Index(path, providerDelimiter)
-	indicator := path[:ind+3]
+	indicator := path[:ind+len(providerDelimiter)]
 	switch indicator {
 	case fsPrefix:
 		return fs{ctx}
-	case s3Prefix:
-		return s3{ctx}
+	// case s3Prefix:
+	// 	return s3{ctx}
 	case gcsPrefix:
 		return gcs{ctx}
-	case httpPrefix, httpsPrefix:
-		return http{ctx}
+		// case httpPrefix, httpsPrefix:
+		// 	return http{ctx}
 	}
 	return nil
 }

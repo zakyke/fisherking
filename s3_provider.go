@@ -13,10 +13,10 @@ type s3 struct {
 	context.Context
 }
 
-func (s3) GetWithContext(contect context.Context, path string) FileGetter {
-	//Listern to cancel channel.
-	return gcs{}.Get
-}
+// func (s3) GetWithContext(contect context.Context, path string) FileGetter {
+// 	//Listern to cancel channel.
+// 	return gcs{}.Get
+// }
 func (s3) Get(path string) (io.Reader, error) {
 	bucket, object := parseGCSBucket(path)
 	gcsc, err := google.DefaultClient(context.Background(), gcsstorage.DevstorageFullControlScope)
@@ -42,6 +42,6 @@ func (s3) Get(path string) (io.Reader, error) {
 }
 
 func parseS3Bucket(path string) (bucket, file string) {
-	be := strings.Index(path[4:], pathSeperator)
+	be := strings.Index(path[4:], linPathSeperator)
 	return path[4 : be+4], path[be+4+1:]
 }

@@ -3,7 +3,11 @@ package fisherking
 import (
 	"context"
 	"io"
+	"log"
+	"net/http"
 	"strings"
+
+	"bytes"
 
 	"golang.org/x/oauth2/google"
 	gcsstorage "google.golang.org/api/storage/v1"
@@ -13,35 +17,66 @@ type gcs struct {
 	context.Context
 }
 
-func (gcs) GetWithContext(contect context.Context, path string) FileGetter {
-	//Listern to cancel channel.
-	return gcs{}.Get
-}
 func (gcs) Get(path string) (io.Reader, error) {
-	bucket, object := parseGCSBucket(path)
-	gcsc, err := google.DefaultClient(context.Background(), gcsstorage.DevstorageFullControlScope)
+	service, client, err := NewGcsService()
 	if err != nil {
 		return nil, err
 	}
-	service, err := gcsstorage.New(gcsc)
-	if err != nil {
-		return nil, err
-	}
-
 	//TODO cancel the call if context cancel or timeout
+	bucket, object := parseGCSBucket(path)
+
 	GCSObject, err := service.Objects.Get(bucket, object).Fields(`mediaLink`).Do()
 	if err != nil {
 		return nil, err
 	}
-	rsp, err := gcsc.Get(GCSObject.MediaLink)
+	rsp, err := client.Get(GCSObject.MediaLink)
 	if err != nil {
 		return nil, err
 	}
+	defer rsp.Body.Close()
 
-	return rsp.Body, nil
+	//Drain the body in order to reuse the http connection
+	data := bytes.NewBuffer(nil)
+	io.Copy(data, rsp.Body)
+	rtn := bytes.NewReader(data.Bytes())
+	return rtn, nil
 }
 
 func parseGCSBucket(path string) (bucket, file string) {
-	be := strings.Index(path[5:], pathSeperator)
-	return path[5 : be+5], path[be+5+1:]
+	gslen := len(gcsPrefix)
+	be := strings.Index(path[gslen:], linPathSeperator)
+	return path[gslen : be+gslen], path[be+gslen+1:]
+}
+
+func NewGcsService() (*gcsstorage.Service, *http.Client, error) {
+	gcsc, err := google.DefaultClient(context.Background(), gcsstorage.DevstorageFullControlScope)
+	if err != nil {
+		return nil, nil, err
+	}
+	service, err := gcsstorage.New(gcsc)
+	if err != nil {
+		return nil, nil, err
+	}
+	return service, gcsc, nil
+}
+
+func (g gcs) Put(destination string, data io.Reader) error {
+	service, _, err := NewGcsService()
+	if err != nil {
+		return err
+	}
+	bucketName, fileName := parseGCSBucket(destination)
+	object := &gcsstorage.Object{Name: fileName}
+	metadata := g.Value(`metadata`)
+	if metadata != nil {
+		if md, ok := metadata.(map[string]string); ok {
+			object.Metadata = md
+		}
+	}
+
+	if _, err := service.Objects.Insert(bucketName, object).Media(data).Do(); err != nil {
+		log.Printf("failed to upload file to GCS %s: %v\n", fileName, err)
+		return err
+	}
+	return nil
 }
