@@ -25,3 +25,5 @@ clean:
 
 todo:
 	@echo None
+doc:
+	xdg-open  http://0.0.0.0:6060/pkg/github.com/zakyke/fisherking/ && godoc -http=:6060

@@ -29,7 +29,7 @@ func (f fs) Put(destination string, data io.Reader) error {
 	basepath := path.Dir(destination)
 	filename := path.Base(destination)
 	log.Println(basepath, ` `, filename)
-	if os.MkdirAll(basepath, 0777) != nil {
+	if os.MkdirAll(basepath, 0700) != nil {
 		return errors.New(`unable to create directory ` + basepath)
 
 	}

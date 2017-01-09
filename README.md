@@ -1,5 +1,10 @@
 # Fisherking
 Get files from GCS S3 and file system. Can be extended with other providers.
+
+[Setup](SETUP.md)
+
+[Usage](USAGE.md)
+
 Roadmap:
     Dropbox
     Google drive

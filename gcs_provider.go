@@ -18,7 +18,7 @@ type gcs struct {
 }
 
 func (gcs) Get(path string) (io.Reader, error) {
-	service, client, err := NewGcsService()
+	service, client, err := newGcsService()
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func parseGCSBucket(path string) (bucket, file string) {
 	return path[gslen : be+gslen], path[be+gslen+1:]
 }
 
-func NewGcsService() (*gcsstorage.Service, *http.Client, error) {
+func newGcsService() (*gcsstorage.Service, *http.Client, error) {
 	gcsc, err := google.DefaultClient(context.Background(), gcsstorage.DevstorageFullControlScope)
 	if err != nil {
 		return nil, nil, err
@@ -61,7 +61,7 @@ func NewGcsService() (*gcsstorage.Service, *http.Client, error) {
 }
 
 func (g gcs) Put(destination string, data io.Reader) error {
-	service, _, err := NewGcsService()
+	service, _, err := newGcsService()
 	if err != nil {
 		return err
 	}

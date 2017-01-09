@@ -1,18 +1,20 @@
-//Package fisherking ...
-/*
-*
-*File fetcher get return an io.Reader with data from a file in the web or local disk.
-*Features:
-*   Resolve the file provider from the path GCS S3 FS
-*   Its possible to add more providers by implementing Fetcher interface
-*   Save activity log.
-*
-*   Accept Contect for cancelation and timeouts
-*   Clean automatically after a while
-*   Pass credencial in context
-*
-*
- */
+//Package fisherking implements access to a varaiaty of file storage.
+//
+//File fetcher get return an io.Reader with data from a file in the web or local disk.
+//
+//Features
+//
+//Resolve the file provider from the path GCS S3 FS
+//
+//Its possible to add more providers by implementing Fetcher interface
+//
+//Save activity log.
+//
+//Accept Contect for cancelation and timeouts
+//
+//Clean automatically after a while
+//
+//Use default credentials or pass credentials in context
 package fisherking
 
 import (
@@ -29,13 +31,13 @@ type Provider struct {
 }
 
 const (
-	gcsPrefix         = `gs://`
-	s3Prefix          = `s3://`
-	fsPrefix          = `file://`
-	httpPrefix        = `http://`
-	httpsPrefix       = `https://`
-	linPathSeperator  = `/`
-	winPathSeperator  = `\`
+	gcsPrefix = `gs://`
+	s3Prefix  = `s3://`
+	fsPrefix  = `file://`
+	//httpPrefix        = `http://`
+	//httpsPrefix       = `https://`
+	linPathSeperator = `/`
+	//winPathSeperator  = `\`
 	providerDelimiter = `://`
 )
 
@@ -49,7 +51,7 @@ const (
 // 	Delete(destination string) (io.Writer, error)
 // }
 
-//Fetcher an interface a provider should implement
+//Fisher an interface a provider should implement
 type Fisher interface {
 	Get(source string) (io.Reader, error)
 	Put(destination string, data io.Reader) error
@@ -88,8 +90,8 @@ func providerFactory(ctx context.Context, path string) Fisher {
 	switch indicator {
 	case fsPrefix:
 		return fs{ctx}
-	// case s3Prefix:
-	// 	return s3{ctx}
+	case s3Prefix:
+		return s3{ctx}
 	case gcsPrefix:
 		return gcs{ctx}
 		// case httpPrefix, httpsPrefix:

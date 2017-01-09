@@ -1,10 +1,10 @@
 package fisherking
 
-import "context"
+// import "context"
 
-type htp struct {
-	context.Context
-}
+// type htp struct {
+// 	context.Context
+// }
 
 // func (htp) GetWithContext(contect context.Context, source string) FileGetter {
 // 	panic("not implemented")
