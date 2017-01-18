@@ -38,6 +38,6 @@ func (f fs) Put(destination string, data io.Reader) error {
 	if err != nil {
 		return errors.New(`nable to create ` + path.Join(basepath, filename) + err.Error())
 	}
-	defer fileOut.Close()
+	defer checkClose(fileOut)
 	return nil
 }

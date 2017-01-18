@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestGCSSplitPath(t *testing.T) {
@@ -40,7 +41,14 @@ func TestReadWriteGCS(t *testing.T) {
 			t.Log(e)
 			t.Fail()
 		}
-		e = Put(`gs://testtc/`+object, r)
+		metadata := make(map[string]string)
+		metadata[`rows`] = "230"
+		metadata[`created`] = time.Now().Format(time.RFC3339)
+		metadata[`bytes`] = "25555"
+
+		ctx := context.WithValue(context.Background(), mdKey, metadata)
+		e = PutWithContext(ctx, `gs://testtc/`+object, r)
+		//	e = Put(`gs://testtc/`+object, r)
 		if e != nil {
 			t.Log(e)
 			t.Fail()
@@ -67,7 +75,7 @@ func filesInFolder(path string) []string {
 var mdKey interface{} = `metadata`
 
 func TestReadWriteWithContextGCS(t *testing.T) {
-	object := `2016/12/11/770/j2016_12_11_770.jobs`
+	object := `2017/01/10/490/56f91cd4d3e3660002000033/adsmanager/http-collector-asia-multi-preemp-6lsv-adsmanager-1484035205409012184.gz`
 	f := `gs://adsmanager_files/` + object
 	r, e := Get(f)
 	if e != nil {
@@ -75,11 +83,12 @@ func TestReadWriteWithContextGCS(t *testing.T) {
 		t.Fail()
 	}
 	metadata := make(map[string]string)
-	metadata[`numOfRows`] = "23555"
-	metadata[`created`] = "2016-12-12 12:58:59"
+	metadata[`rows`] = "230"
+	metadata[`created`] = time.Now().Format(time.RFC3339)
+	metadata[`bytes`] = "25555"
 
 	ctx := context.WithValue(context.Background(), mdKey, metadata)
-	e = PutWithContext(ctx, `gs://testtc/`+object+`3`, r)
+	e = PutWithContext(ctx, `gs://testtc/`+object, r)
 	if e != nil {
 		t.Log(e)
 		t.Fail()

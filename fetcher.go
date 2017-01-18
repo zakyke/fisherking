@@ -21,6 +21,8 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log"
+	"reflect"
 	"strings"
 )
 
@@ -31,11 +33,11 @@ type Provider struct {
 }
 
 const (
-	gcsPrefix = `gs://`
-	s3Prefix  = `s3://`
-	fsPrefix  = `file://`
-	//httpPrefix        = `http://`
-	//httpsPrefix       = `https://`
+	gcsPrefix        = `gs://`
+	s3Prefix         = `s3://`
+	fsPrefix         = `file://`
+	httpPrefix       = `http://`
+	httpsPrefix      = `https://`
 	linPathSeperator = `/`
 	//winPathSeperator  = `\`
 	providerDelimiter = `://`
@@ -94,8 +96,15 @@ func providerFactory(ctx context.Context, path string) Fisher {
 		return s3{ctx}
 	case gcsPrefix:
 		return gcs{ctx}
-		// case httpPrefix, httpsPrefix:
-		// 	return http{ctx}
+	case httpPrefix, httpsPrefix:
+		return htp{ctx}
 	}
 	return nil
+}
+
+func checkClose(ref io.Closer) {
+	if e := ref.Close(); e != nil {
+		log.Println(e, reflect.TypeOf(ref))
+	}
+
 }

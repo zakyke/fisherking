@@ -2,6 +2,7 @@ package fisherking
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"os"
 	"testing"
@@ -9,7 +10,7 @@ import (
 
 func ExampleGet() /*(io.Reader, error)*/ {
 	f := `gs://bucket_name/2016/12/11/770/fileNmae.txt`
-	/*read, err :=*/ Get(f)
+	/*read, err :=*/ _, _ = Get(f)
 	//return read, err
 	// Output: io.Reader and error
 }
@@ -22,10 +23,7 @@ func ExamplePut() /*error*/ {
 			return e
 		}
 		e = Put(`gs://bucket_name/`+object, r)
-		if e != nil {
-			return e
-		}
-		return nil
+		return e
 	}
 
 	files := filesInFolder(`/home/my/data`)
@@ -84,4 +82,14 @@ func TestS32GCSCopy(t *testing.T) {
 	if e != nil {
 		t.Error(e)
 	}
+}
+
+type CC struct {
+}
+
+func (c CC) Close() error {
+	return errors.New(`test error`)
+}
+func TestCC(t *testing.T) {
+	checkClose(CC{})
 }

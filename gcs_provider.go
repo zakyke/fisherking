@@ -33,11 +33,14 @@ func (gcs) Get(path string) (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rsp.Body.Close()
+	defer checkClose(rsp.Body)
 
 	//Drain the body in order to reuse the http connection
 	data := bytes.NewBuffer(nil)
-	io.Copy(data, rsp.Body)
+	_, e := io.Copy(data, rsp.Body)
+	if e != nil {
+		return nil, e
+	}
 	rtn := bytes.NewReader(data.Bytes())
 	return rtn, nil
 }
